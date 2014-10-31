@@ -1,10 +1,100 @@
 var express = require('express');
+
+// Api Reference - https://github.com/expressjs/cookies
+var Cookies = require( "cookies" );
+
+// Api Reference - https://github.com/felixge/node-mysql
+var mysql      = require('mysql');
+var connection = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : 'root',
+    port     : '8889',
+    database : 'adventure'
+});
+connection.connect();
+
 var app = express();
 
+
+/**
+ * Base Route
+ *
+ * Checks if a user is logged in, if not redirect to log in
+ */
 app.get('/', function(req, res){
-	res.status(200);
-	res.sendFile(__dirname + "/index.html");
+    var cookies = new Cookies(req, res);
+    if(cookies.get("user_id") == undefined) {
+        res.redirect('/users/login');
+    } else {
+        // query the database for the user
+
+        res.status(200);
+        res.sendFile(__dirname + "/index.html");
+    }
 });
+
+/**
+ * Users Routes
+ *
+ * get - returns a json array of user data based on cookie
+ * get login - returns login page
+ * post login - logs user in and sets cookies based on post data
+ * get register - returns register page
+ * post register - adds a user to the database
+ */
+app.get('/users', function(req, res){
+    // check user cookie
+    // if logged in get user data and items
+    // otherwise send to base route
+});
+app.get('/users/login', function(req, res){
+    // send login.html
+});
+app.post('/users/login', function(req, res){
+    // check post data for user in the database
+    // if in database set cookies and send to base route
+    // otherwise back to login
+});
+app.get('/users/register', function(req, res){
+    // send register.html
+});
+app.post('/users/register', function(req, res){
+    // check post data isnt empty
+    // add user to database and redirect to login page
+});
+
+/**
+ * Location Routes
+ *
+ * get - returns a locations information based off id
+ * post - updates the users last location
+ * put - use an item at the desired location
+ */
+app.get('/location/:id', function(req, res){
+    // fetch database for location
+    // return in json array
+});
+app.post('/location/:id', function(req, res){
+    // update user based on cookie
+});
+app.put('/location/:id', function(req, res){
+    // remove item from users_items
+    // check for special event
+    // update users location if so
+});
+
+/**
+ * Image Routes
+ */
+app.get('/img/:name', function(req, res){
+    res.status(200);
+    res.sendFile(__dirname + "/" + req.params.name);
+});
+
+
+
+
 
 app.get('/:id', function(req, res){
 	if (req.params.id == "inventory") {
@@ -23,11 +113,6 @@ app.get('/:id', function(req, res){
 	}
 	res.status(404);
 	res.send("not found, sorry");
-});
-
-app.get('/images/:name', function(req, res){
-	res.status(200);
-	res.sendFile(__dirname + "/" + req.params.name);
 });
 
 app.delete('/:id/:item', function(req, res){
@@ -90,61 +175,3 @@ var dropbox = function(ix,room) {
 	room.what.push(item);
 }
 
-var inventory = ["laptop"];
-
-var campus =
-    [ { "id": "lied-center",
-	"where": "LiedCenter.jpg",
-	"next": {"east": "eaton-hall", "south": "dole-institute"},
-	"text": "You are outside the Lied Center."
-      },
-      { "id": "dole-institute",
-	"where": "DoleInstituteofPolitics.jpg",
-	"next": {"east": "allen-fieldhouse", "north": "lied-center"},
-	"text": "You take in the view of the Dole Institute of Politics. This is the best part of your walk to Nichols Hall."
-      },
-      { "id": "eaton-hall",
-	"where": "EatonHall.jpg",
-	"next": {"east": "snow-hall", "south": "allen-fieldhouse", "west": "lied-center"},
-	"text": "You are outside Eaton Hall. You should recognize here."
-      },
-      { "id": "snow-hall",
-	"where": "SnowHall.jpg",
-	"next": {"east": "strong-hall", "south": "ambler-recreation", "west": "eaton-hall"},
-	"text": "You are outside Snow Hall. Math class? Waiting for the bus?"
-      },
-      { "id": "strong-hall",
-	"where": "StrongHall.jpg",
-	"next": {"east": "outside-fraser", "north": "memorial-stadium", "west": "snow-hall"},
-	"what": ["coffee"],
-	"text": "You are outside Stong Hall."
-      },
-      { "id": "ambler-recreation",
-	"where": "AmblerRecreation.jpg",
-	"next": {"west": "allen-fieldhouse", "north": "snow-hall"},
-	"text": "It's the starting of the semester, and you feel motivated to be at the Gym. Let's see about that in 3 weeks."
-      },
-      { "id": "outside-fraser",
-  "where": "OutsideFraserHall.jpg",
-	"next": {"west": "strong-hall","north":"spencer-museum"},
-	"what": ["basketball"],
-	"text": "On your walk to the Kansas Union, you wish you had class outside."
-      },
-      { "id": "spencer-museum",
-	"where": "SpencerMuseum.jpg",
-	"next": {"south": "outside-fraser","west":"memorial-stadium"},
-	"what": ["art"],
-	"text": "You are at the Spencer Museum of Art."
-      },
-      { "id": "memorial-stadium",
-	"where": "MemorialStadium.jpg",
-	"next": {"south": "strong-hall","east":"spencer-museum"},
-	"what": ["ku flag"],
-	"text": "Half the crowd is wearing KU Basketball gear at the football game."
-      },
-      { "id": "allen-fieldhouse",
-	"where": "AllenFieldhouse.jpg",
-	"next": {"north": "eaton-hall","east": "ambler-recreation","west": "dole-institute"},
-	"text": "Rock Chalk! You're at the field house."
-      }
-    ]
