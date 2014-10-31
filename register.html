@@ -1,0 +1,55 @@
+<html>
+<head>
+    <!-- Twitter Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+    <!-- Custom styles for this template -->
+    <link href="http://view-source:getbootstrap.com/examples/cover/cover.css" rel="stylesheet">
+
+    <title>Adventure Game</title>
+</head>
+<body>
+<div class="site-wrapper container">
+
+    <div class="site-wrapper-inner">
+
+        <div class="cover-container">
+
+            <div class="masthead clearfix">
+                <div class="inner">
+                    <h3 class="masthead-brand">Adventure Game</h3>
+                </div>
+            </div>
+
+            <div class="inner cover">
+
+                <h1 class="cover-heading">Register</h1>
+                <form id='register' action='/users/register' method='post'>
+                    <fieldset >
+                        <legend>Login</legend>
+                        <input type='hidden' name='submitted' id='submitted' value='1'/>
+
+                        <label for='username' >Username: </label>
+                        <input type='text' name='username' id='username' maxlength="16" />
+
+                        <label for='password' >Password: </label>
+                        <input type='password' name='password' id='password' maxlength="50" />
+
+                        <input type='submit' name='Submit' value='Register' />
+                    </fieldset>
+                </form>
+            </div>
+
+            <footer class="footer">
+                <div class="inner">
+                    <p>Created in EECS 581</p>
+                </div>
+            </footer>
+
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>
