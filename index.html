@@ -1,88 +1,149 @@
 <html>
-  <body>
-  <font size=4><div id="where"></div></font>
-  <img id="picture" src="">
-  <font size=3><div id="what"></div></font>
-  <font size=3><div id="inventory"></div></font>
-  <font size=3><div id="next"></div></font>
-  <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
-  <script>
+<head>
+    <!-- Twitter Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+    <!-- Custom styles for this template -->
+    <link href="http://view-source:getbootstrap.com/examples/cover/cover.css" rel="stylesheet">
+
+    <title>Adventure Game</title>
+</head>
+<body>
+<div class="site-wrapper container">
+
+    <div class="site-wrapper-inner">
+
+        <div class="cover-container">
+
+            <div class="masthead clearfix">
+                <div class="inner">
+                    <h3 class="masthead-brand">Adventure Game</h3>
+                </div>
+            </div>
+
+            <div class="inner cover">
+
+                <h1 class="cover-heading" id="name">Cover your page.</h1>
+                <img id="img" src="">
+                <font size=3><div id="name"></div></font>
+                <font size=3><div id="inventory"></div></font>
+                <hr>
+                <font size=3><div id="next" class="btn-group"></div></font>
+                <hr>
+            </div>
+
+            <footer class="footer">
+                <div class="inner">
+                    <p>Created in EECS 581</p>
+                </div>
+            </footer>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script>
     $(function() {
-      $("#where").html("booting...");
-      where = "strong-hall";
+        $("#name").html("booting...");
 
-      function refresh() {
-        $.get("/" + where, function (data) {
-           $("#where").html(data.text);
-           $("#picture").attr("src","images/" + data.where);
-           if (data.what == undefined || data.what.length == 0) {
-              $("#what").html("");
-           } else {
-              $("#what").html("You can see : ");
-              for(var i in data.what) {
-                var item = data.what[i];
-                $("#what").append(item);
-                button = $("<button/>");
-                button.text("Take " + item);
-                (function(button,where,item) {
-                  button.click(function() {
-                    $.ajax("/" + where + "/" + item,
-                        { success : refresh
-                        , type : "DELETE"
+        var directions = ['north', 'east', 'south', 'west'];
+
+        function refresh() {
+            // get user location
+            $.get('/users', function (user) {
+                $.get("/location/" + user.location_id, function (location) {
+                    // update the name text
+                    $("#name").html(location.name);
+                    // update the image
+                    $("#img").attr("src","img/" + location.img);
+
+
+                    /*if (data.what == undefined || data.what.length == 0) {
+                     $("#what").html("");
+                     } else {
+                     $("#what").html("You can see : ");
+                     for(var i in data.what) {
+                     var item = data.what[i];
+                     $("#what").append(item);
+                     button = $("<button/>");
+                     button.text("Take " + item);
+                     (function(button,where,item) {
+                     button.click(function() {
+                     $.ajax("/" + where + "/" + item,
+                     { success : refresh
+                     , type : "DELETE"
+                     }
+                     );
+                     refresh();
+                     });
+                     })(button,where,item);
+                     $("#what").append(button);
+                     }
+                     }*/
+
+                    // Empty out the next buttons
+                    $("#next").html("");
+
+                    // Create the direction buttons
+                    for(var i in directions) {
+                        if(location[directions[i]]) {
+                            button = $("<button class='btn btn-default'/>");
+                            button.text("Go " + directions[i]);
+                            (function(button,dest) {
+                                button.click(function() {
+                                    $.ajax("/location/" + dest, {
+                                        success : refresh,
+                                        type : "POST"
+                                    });
+                                    refresh();
+                                });
+                            })(button,location[directions[i]]);
+                            $("#next").append(button);
                         }
-                    );
-                    refresh();
-                  });
-                })(button,where,item);
-                $("#what").append(button);
-              }
-          }
-
-          $("#next").html("");
-          for(var i in data.next) {
-            $("#next").append(i);
-            button = $("<button/>");
-            button.text("Go " + i);
-            (function(button,dest) {
-              button.click(function() {
-                where = dest;
-                refresh();
-              });
-            })(button,data.next[i]);
-            $("#next").append(button);
-          }
+                    }
+                });
+            });
 
 
-        });
-        $.get("/inventory",function (data) {
-          if (data == undefined || data.length == 0) {
+
+            /*$.get("/inventory",function (data) {
+             if (data == undefined || data.length == 0) {
              $("#inventory").html("You are not carrying anything");
-          } else {
+             } else {
              $("#inventory").html("You are carrying : ");
              for(var i in data) {
-               var item = data[i];
-               $("#inventory").append(item);
-               button = $("<button/>");
-               button.text("Drop " + item);
-                (function(button,where,item) {
-                  button.click(function() {
-                    $.ajax("/" + where + "/" + item,
-                        { success : refresh
-                        , type : "PUT"
-                        }
-                    );
-                    refresh();
-                  });
-                })(button,where,item);
-               $("#inventory").append(button);
-            }
-          }
-        });
-      }
+             var item = data[i];
+             $("#inventory").append(item);
+             button = $("<button/>");
+             button.text("Drop " + item);
+             (function(button,where,item) {
+             button.click(function() {
+             $.ajax("/" + where + "/" + item,
+             { success : refresh
+             , type : "PUT"
+             }
+             );
+             refresh();
+             });
+             })(button,where,item);
+             $("#inventory").append(button);
+             }
+             }
+             });*/
+        }
 
-      refresh();
+        refresh();
 
     });
-  </script>
-  </body>
+</script>
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+</body>
 </html>
