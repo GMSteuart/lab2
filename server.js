@@ -3,6 +3,10 @@ var express = require('express');
 // Api Reference - https://github.com/expressjs/cookies
 var Cookies = require( "cookies" );
 
+// Api Reference - https://github.com/expressjs/body-parser
+var bodyParser = require('body-parser')
+var urlencodedParser = bodyParser.urlencoded({ extended: false })
+
 // Api Reference - https://github.com/felixge/node-mysql
 var mysql      = require('mysql');
 var connection = mysql.createConnection({
@@ -16,7 +20,6 @@ connection.connect();
 
 var app = express();
 
-
 /**
  * Base Route
  *
@@ -28,7 +31,6 @@ app.get('/', function(req, res){
         res.redirect('/users/login');
     } else {
         // query the database for the user
-
         res.status(200);
         res.sendFile(__dirname + "/index.html");
     }
@@ -49,19 +51,25 @@ app.get('/users', function(req, res){
     // otherwise send to base route
 });
 app.get('/users/login', function(req, res){
-    // send login.html
+    res.status(200);
+    res.sendFile(__dirname + "/login.html");
 });
-app.post('/users/login', function(req, res){
+app.post('/users/login', urlencodedParser, function(req, res){
     // check post data for user in the database
     // if in database set cookies and send to base route
     // otherwise back to login
 });
 app.get('/users/register', function(req, res){
-    // send register.html
+    res.status(200);
+    res.sendFile(__dirname + "/register.html");
 });
-app.post('/users/register', function(req, res){
+app.post('/users/register', urlencodedParser, function(req, res){
     // check post data isnt empty
     // add user to database and redirect to login page
+});
+app.get('/users/logout', function(req, res){
+    // destroy cookies
+    // redirect to login page
 });
 
 /**
