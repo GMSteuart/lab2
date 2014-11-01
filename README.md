@@ -14,3 +14,11 @@ Notes:
 - There is no flash messages to the user on the screen of backend processes
 - Quickly going through the map may prevent from the next place loading on screen, but the player on the
     the backend will still have been updated
+
+APIs:
+cookies - https://github.com/expressjs/cookies
+    For handling cookies
+body-parser - https://github.com/expressjs/body-parser
+    For easy handling of any data sent to the server
+node-mysql - https://github.com/felixge/node-mysql
+    For connecting to a mysql server and making queries

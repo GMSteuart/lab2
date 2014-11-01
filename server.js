@@ -30,7 +30,6 @@ app.get('/', function(req, res){
     if(cookies.get("user_id") == undefined) {
         res.redirect('/users/login');
     } else {
-        // query the database for the user
         res.status(200);
         res.sendFile(__dirname + "/index.html");
     }
@@ -47,8 +46,25 @@ app.get('/', function(req, res){
  */
 app.get('/users', function(req, res){
     // check user cookie
+    var cookies = new Cookies(req, res);
+    if(cookies.get('user_id')) {
+        var query = "SELECT `location_id` FROM `users` WHERE `id` = " + cookies.get('user_id');
+        connection.query(query, function(err, user) {
+            if (err) {
+                console.error('Error: ' + err.stack);
+                return;
+            } else {
+                // get items as well
+                res.set({'Content-Type': 'application/json'});
+                res.status(200);
+                console.log(user[0]);
+                res.send(user[0]);
+            }
+        });
+    } else {
+        return;
+    }
     // if logged in get user data and items
-    // otherwise send to base route
 });
 app.get('/users/login', function(req, res){
     res.status(200);
@@ -56,7 +72,24 @@ app.get('/users/login', function(req, res){
 });
 app.post('/users/login', urlencodedParser, function(req, res){
     // check post data for user in the database
-    // if in database set cookies and send to base route
+    var query = "SELECT `id`, `username`  FROM `users` WHERE " +
+        "`username` = '" + req.body.username + "' AND " +
+        "`password` = '" + req.body.password + "'";
+
+    connection.query(query, function(err, user) {
+        if (err) {
+            console.error('Error: ' + err.stack);
+            return;
+        } else {
+            console.log(user);
+            // if in database set cookies and send to base route
+            var cookies = new Cookies(req, res);
+            cookies.set('user_id', user[0]['id']);
+            cookies.set('username', user[0]['username']);
+            res.redirect('/');
+        }
+    });
+
     // otherwise back to login
 });
 app.get('/users/register', function(req, res){
@@ -69,7 +102,11 @@ app.post('/users/register', urlencodedParser, function(req, res){
 });
 app.get('/users/logout', function(req, res){
     // destroy cookies
+    var cookies = new Cookies(req, res);
+    cookies.set('user_id', undefined);
+    cookies.set('username', undefined);
     // redirect to login page
+    res.redirect('/users/login');
 });
 
 /**
