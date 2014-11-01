@@ -57,7 +57,7 @@ app.get('/users', function(req, res){
                 // get items as well
                 res.set({'Content-Type': 'application/json'});
                 res.status(200);
-                console.log(user[0]);
+                //console.log(user[0]);
                 res.send(user[0]);
             }
         });
@@ -81,16 +81,19 @@ app.post('/users/login', urlencodedParser, function(req, res){
             console.error('Error: ' + err.stack);
             return;
         } else {
-            console.log(user);
             // if in database set cookies and send to base route
-            var cookies = new Cookies(req, res);
-            cookies.set('user_id', user[0]['id']);
-            cookies.set('username', user[0]['username']);
-            res.redirect('/');
+            if(user[0]) {
+                var cookies = new Cookies(req, res);
+                cookies.set('user_id', user[0]['id']);
+                cookies.set('username', user[0]['username']);
+                res.redirect('/');
+
+            // otherwise back to login
+            } else {
+                res.redirect('/users/login');
+            }
         }
     });
-
-    // otherwise back to login
 });
 app.get('/users/register', function(req, res){
     res.status(200);
