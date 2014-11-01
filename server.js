@@ -55,16 +55,28 @@ app.get('/users', function(req, res){
                 return;
             } else {
                 // get items as well
-                res.set({'Content-Type': 'application/json'});
-                res.status(200);
-                //console.log(user[0]);
-                res.send(user[0]);
+                query = "SELECT `users_items`.`id`, `users_items`.`item_id`, `items`.`name` " +
+                "FROM users_items " +
+                "LEFT JOIN items ON users_items.item_id = items.id " +
+                "WHERE users_items.user_id = "+ cookies.get('user_id');
+
+                connection.query(query, function(err, items) {
+                    if (err) {
+                        console.error('Error: ' + err.stack);
+                        return;
+                    } else {
+                        res.set({'Content-Type': 'application/json'});
+                        res.status(200);
+                        user[0]['items'] = items;
+                        console.log(user[0]);
+                        res.send(user[0]);
+                    }
+                });
             }
         });
     } else {
         return;
     }
-    // if logged in get user data and items
 });
 app.get('/users/login', function(req, res){
     res.status(200);
@@ -146,7 +158,23 @@ app.get('/users/logout', function(req, res){
  */
 app.get('/location/:id', function(req, res){
     // fetch database for location
-    // return in json array
+    var query = "SELECT * FROM `locations` WHERE `id` = " + req.params.id;
+
+    connection.query(query, function(err, location) {
+        if (err) {
+            console.error('Error: ' + err.stack);
+            return;
+        } else {
+            // if in database return json array
+            if(location[0]) {
+                res.set({'Content-Type': 'application/json'});
+                res.status(200);
+                res.send(location[0]);
+            } else {
+                return;
+            }
+        }
+    });
 });
 app.post('/location/:id', function(req, res){
     // update user based on cookie
@@ -162,7 +190,7 @@ app.put('/location/:id', function(req, res){
  */
 app.get('/img/:name', function(req, res){
     res.status(200);
-    res.sendFile(__dirname + "/" + req.params.name);
+    res.sendFile(__dirname + "/img/" + req.params.name);
 });
 
 
