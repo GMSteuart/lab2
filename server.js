@@ -100,8 +100,33 @@ app.get('/users/register', function(req, res){
     res.sendFile(__dirname + "/register.html");
 });
 app.post('/users/register', urlencodedParser, function(req, res){
-    // check post data isnt empty
     // add user to database and redirect to login page
+    var query = "INSERT INTO `adventure`.`users` " +
+        "(`id`, `username`, `password`, `location_id`, `updated`, `secret`) " +
+        "VALUES (NULL, '" + req.body.username + "', '" + req.body.password + "', '', '', '');";
+
+    connection.query(query, function(err, user) {
+        if (err) {
+            console.error('Error: ' + err.stack);
+            return;
+        } else {
+            if(user.affectedRows) {
+                // add default item to user inventory (labtop)
+                query = "INSERT INTO `adventure`.`users_items` " +
+                "(`id`, `user_id`, `item_id`) " +
+                "VALUES (NULL, '" + user.insertId + "', '5');";
+
+                connection.query(query, function(err, item) {
+                    if (err) {
+                        console.error('Error: ' + err.stack);
+                        return;
+                    } else {
+                        res.redirect('/');
+                    }
+                });
+            }
+        }
+    });
 });
 app.get('/users/logout', function(req, res){
     // destroy cookies
