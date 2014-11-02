@@ -25,6 +25,9 @@
 
                 <h1 class="cover-heading" id="name">Cover your page.</h1>
                 <img id="img" src="">
+                    <hr>
+                <div class="btn-group" id="items"></div>
+
                 <font size=3><div id="name"></div></font>
                 <font size=3><div id="inventory"></div></font>
                 <hr>
@@ -58,37 +61,55 @@
         var directions = ['north', 'east', 'south', 'west'];
 
         function refresh() {
-            // get user location
+            // get user location and items
             $.get('/users', function (user) {
+                console.log(user);
+
+                // get location information
                 $.get("/location/" + user.location_id, function (location) {
+                    console.log(location);
+
                     // update the name text
                     $("#name").html(location.name);
+
                     // update the image
                     $("#img").attr("src","/img/" + location.img);
 
+                    // Output items
+                    for(var i in user.items) {
+                        var item = user.items[i];
 
-                    /*if (data.what == undefined || data.what.length == 0) {
-                     $("#what").html("");
-                     } else {
-                     $("#what").html("You can see : ");
-                     for(var i in data.what) {
-                     var item = data.what[i];
-                     $("#what").append(item);
-                     button = $("<button/>");
-                     button.text("Take " + item);
-                     (function(button,where,item) {
-                     button.click(function() {
-                     $.ajax("/" + where + "/" + item,
-                     { success : refresh
-                     , type : "DELETE"
-                     }
-                     );
-                     refresh();
-                     });
-                     })(button,where,item);
-                     $("#what").append(button);
-                     }
-                     }*/
+                        // Check put
+                        if(item.location_id == 0) {
+                            button = $("<button class='btn btn-default'/>");
+                            button.text("Drop " + item.name);
+                            (function(button, user_item_id, location_id) {
+                                button.click(function() {
+                                    $.ajax("/inventory/" + user_item_id + "/" + location_id,{
+                                        success : refresh,
+                                        type : "PUT"
+                                    });
+                                    refresh();
+                                });
+                            })(button, item.id, location.id);
+                            $("#items").append(button);
+
+                        // Check take (only if item is at current location)
+                        } else if(item.location_id == location.id) {
+                            button = $("<button class='btn btn-default'/>");
+                            button.text("Take " + item.name);
+                            (function(button, user_item_id) {
+                                button.click(function() {
+                                    $.ajax("/inventory/" + user_item_id,{
+                                        success : refresh,
+                                        type : "DELETE"
+                                    });
+                                    refresh();
+                                });
+                            })(button, item.id);
+                            $("#items").append(button);
+                        }
+                    }
 
                     // Empty out the next buttons
                     $("#next").html("");
@@ -112,33 +133,6 @@
                     }
                 });
             });
-
-
-
-            /*$.get("/inventory",function (data) {
-             if (data == undefined || data.length == 0) {
-             $("#inventory").html("You are not carrying anything");
-             } else {
-             $("#inventory").html("You are carrying : ");
-             for(var i in data) {
-             var item = data[i];
-             $("#inventory").append(item);
-             button = $("<button/>");
-             button.text("Drop " + item);
-             (function(button,where,item) {
-             button.click(function() {
-             $.ajax("/" + where + "/" + item,
-             { success : refresh
-             , type : "PUT"
-             }
-             );
-             refresh();
-             });
-             })(button,where,item);
-             $("#inventory").append(button);
-             }
-             }
-             });*/
         }
 
         refresh();

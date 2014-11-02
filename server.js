@@ -55,10 +55,10 @@ app.get('/users', function(req, res){
                 return;
             } else {
                 // get items as well
-                query = "SELECT `users_items`.`id`, `users_items`.`item_id`, `items`.`name` " +
+                query = "SELECT `users_items`.*, `items`.`name` " +
                 "FROM users_items " +
                 "LEFT JOIN items ON users_items.item_id = items.id " +
-                "WHERE users_items.user_id = "+ cookies.get('user_id');
+                "WHERE users_items.user_id = " + cookies.get('user_id');
 
                 connection.query(query, function(err, items) {
                     if (err) {
@@ -68,7 +68,6 @@ app.get('/users', function(req, res){
                         res.set({'Content-Type': 'application/json'});
                         res.status(200);
                         user[0]['items'] = items;
-                        console.log(user[0]);
                         res.send(user[0]);
                     }
                 });
@@ -123,16 +122,25 @@ app.post('/users/register', urlencodedParser, function(req, res){
             return;
         } else {
             if(user.affectedRows) {
-                // add default item to user inventory (labtop)
-                query = "INSERT INTO `adventure`.`users_items` " +
-                "(`id`, `user_id`, `item_id`) " +
-                "VALUES (NULL, '" + user.insertId + "', '5');";
-
-                connection.query(query, function(err, item) {
-                    if (err) {
+                // add items around the map and player invenotry
+                query = "SELECT * FROM `items`";
+                connection.query(query, function(err, items){
+                    if(err) {
                         console.error('Error: ' + err.stack);
                         return;
                     } else {
+                        for(var i in items) {
+                            query = "INSERT INTO `adventure`.`users_items` " +
+                            "(`id`, `user_id`, `item_id`, `location_id`) " +
+                            "VALUES (NULL, '" + user.insertId + "', '"
+                            + items[i]['id'] + "', '" + items[i]['default_location_id'] + "');";
+                            connection.query(query, function(err, item) {
+                                if (err) {
+                                    console.error('Error: ' + err.stack);
+                                    return;
+                                }
+                            });
+                        }
                         res.redirect('/');
                     }
                 });
@@ -155,10 +163,31 @@ app.get('/users/logout', function(req, res){
  * get - returns a locations information based off id
  * post - updates the users last location
  * put - use an item at the desired location
+ * delete - pick up an item from a location
  */
 app.get('/location/:id', function(req, res){
-    // fetch database for location
-    var query = "SELECT * FROM `locations` WHERE `id` = " + req.params.id;
+    // fetch database for location and related item
+    var query = "SELECT `locations`.* " +
+        "FROM `locations` " +
+        "WHERE `locations`.`id` = " + req.params.id;
+
+    connection.query(query, function(err, location) {
+        if (err) {
+            console.error('Error: ' + err.stack);
+            return;
+        } else {
+            res.set({'Content-Type': 'application/json'});
+            res.status(200);
+            res.send(location[0]);
+        }
+    });
+});
+app.post('/location/:id', function(req, res){
+    // update user based on cookie
+    var cookies = new Cookies(req, res);
+    var query = "UPDATE `adventure`.`users` " +
+        "SET `location_id` = '" + req.params.id + "' " +
+        "WHERE `users`.`id` = " + cookies.get('user_id');
 
     connection.query(query, function(err, location) {
         if (err) {
@@ -166,23 +195,13 @@ app.get('/location/:id', function(req, res){
             return;
         } else {
             // if in database return json array
-            if(location[0]) {
-                res.set({'Content-Type': 'application/json'});
+            if(location.affectedRows) {
                 res.status(200);
-                res.send(location[0]);
             } else {
                 return;
             }
         }
     });
-});
-app.post('/location/:id', function(req, res){
-    // update user based on cookie
-});
-app.put('/location/:id', function(req, res){
-    // remove item from users_items
-    // check for special event
-    // update users location if so
 });
 
 /**
@@ -193,86 +212,45 @@ app.get('/img/:name', function(req, res){
     res.sendFile(__dirname + "/img/" + req.params.name);
 });
 
+/**
+ * Inventory Routes
+ *
+ * put - update inventory item to location
+ * delete - update inventory item to 0 (in pocket)
+ */
+app.put('/inventory/:user_item_id/:location_id', function(req, res){
+    // update user based on cookie
+    var cookies = new Cookies(req, res);
+    var query = "UPDATE `adventure`.`users_items` " +
+        "SET `location_id` = '" + req.params.location_id + "' " +
+        "WHERE `users_items`.`id` = " + req.params.user_item_id + " " +
+        "AND `users_items`.`user_id` = " + cookies.get('user_id');
 
-
-
-
-app.get('/:id', function(req, res){
-	if (req.params.id == "inventory") {
-	    res.set({'Content-Type': 'application/json'});
-	    res.status(200);
-	    res.send(inventory);
-	    return;
-	}
-	for (var i in campus) {
-		if (req.params.id == campus[i].id) {
-		    res.set({'Content-Type': 'application/json'});
-		    res.status(200);
-		    res.send(campus[i]);
-		    return;
-		}
-	}
-	res.status(404);
-	res.send("not found, sorry");
+    connection.query(query, function(err, location) {
+        if (err) {
+            console.error('Error: ' + err.stack);
+            return;
+        } else {
+            res.status(200);
+        }
+    });
 });
+app.delete('/inventory/:user_item_id', function(req, res){
+    // update user based on cookie
+    var cookies = new Cookies(req, res);
+    var query = "UPDATE `adventure`.`users_items` " +
+        "SET `location_id` = 0 " +
+        "WHERE `users_items`.`id` = " + req.params.user_item_id + " " +
+        "AND `users_items`.`user_id` = " + cookies.get('user_id');
 
-app.delete('/:id/:item', function(req, res){
-	for (var i in campus) {
-		if (req.params.id == campus[i].id) {
-		    res.set({'Content-Type': 'application/json'});
-		    var ix = -1;
-		    if (campus[i].what != undefined) {
-					ix = campus[i].what.indexOf(req.params.item);
-		    }
-		    if (ix >= 0) {
-		       res.status(200);
-			inventory.push(campus[i].what[ix]); // stash
-		        res.send(inventory);
-			campus[i].what.splice(ix, 1); // room no longer has this
-			return;
-		    }
-		    res.status(200);
-		    res.send([]);
-		    return;
-		}
-	}
-	res.status(404);
-	res.send("location not found");
-});
-
-app.put('/:id/:item', function(req, res){
-	for (var i in campus) {
-		if (req.params.id == campus[i].id) {
-				// Check you have this
-				var ix = inventory.indexOf(req.params.item)
-				if (ix >= 0) {
-					dropbox(ix,campus[i]);
-					res.set({'Content-Type': 'application/json'});
-					res.status(200);
-					res.send([]);
-				} else {
-					res.status(404);
-					res.send("you do not have this");
-				}
-				return;
-		}
-	}
-	res.status(404);
-	res.send("location not found");
+    connection.query(query, function(err, location) {
+        if (err) {
+            console.error('Error: ' + err.stack);
+            return;
+        } else {
+            res.status(200);
+        }
+    });
 });
 
 app.listen(3000);
-
-var dropbox = function(ix,room) {
-	var item = inventory[ix];
-	inventory.splice(ix, 1);	 // remove from inventory
-	if (room.id == 'allen-fieldhouse' && item == "basketball") {
-		room.text	+= " Someone found the ball so there is a game going on!"
-		return;
-	}
-	if (room.what == undefined) {
-		room.what = [];
-	}
-	room.what.push(item);
-}
-
