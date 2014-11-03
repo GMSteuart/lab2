@@ -1,7 +1,7 @@
 Adventure Game
 --------------
 Install:
-1. database.mysql contains the mysql script for building the database
+1. database.sql contains the mysql script for building the database
 2. run terminal/console
 3. cd to project directory
 4. make install
