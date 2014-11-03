@@ -48,7 +48,7 @@ app.get('/users', function(req, res){
     // check user cookie
     var cookies = new Cookies(req, res);
     if(cookies.get('user_id')) {
-        var query = "SELECT `location_id` FROM `users` WHERE `id` = " + cookies.get('user_id');
+        var query = "SELECT `location_id` FROM `users` WHERE `id` = " + connection.escape(cookies.get('user_id'));
         connection.query(query, function(err, user) {
             if (err) {
                 console.error('Error: ' + err.stack);
@@ -58,7 +58,7 @@ app.get('/users', function(req, res){
                 query = "SELECT `users_items`.*, `items`.`name` " +
                 "FROM users_items " +
                 "LEFT JOIN items ON users_items.item_id = items.id " +
-                "WHERE users_items.user_id = " + cookies.get('user_id');
+                "WHERE users_items.user_id = " + connection.escape(cookies.get('user_id'));
 
                 connection.query(query, function(err, items) {
                     if (err) {
@@ -84,8 +84,8 @@ app.get('/users/login', function(req, res){
 app.post('/users/login', urlencodedParser, function(req, res){
     // check post data for user in the database
     var query = "SELECT `id`, `username`  FROM `users` WHERE " +
-        "`username` = '" + req.body.username + "' AND " +
-        "`password` = '" + req.body.password + "'";
+        "`username` = " + connection.escape(req.body.username) + " AND " +
+        "`password` = " + connection.escape(req.body.password);
 
     connection.query(query, function(err, user) {
         if (err) {
@@ -113,8 +113,9 @@ app.get('/users/register', function(req, res){
 app.post('/users/register', urlencodedParser, function(req, res){
     // add user to database and redirect to login page
     var query = "INSERT INTO `adventure`.`users` " +
-        "(`id`, `username`, `password`, `location_id`, `updated`, `secret`) " +
-        "VALUES (NULL, '" + req.body.username + "', '" + req.body.password + "', '', '', '');";
+        "(`id`, `username`, `password`, `location_id`, `updated`) " +
+        "VALUES (NULL, " + connection.escape(req.body.username) + ", "
+        + connection.escape(req.body.password) + ", '5', '');";
 
     connection.query(query, function(err, user) {
         if (err) {
@@ -169,7 +170,7 @@ app.get('/location/:id', function(req, res){
     // fetch database for location and related item
     var query = "SELECT `locations`.* " +
         "FROM `locations` " +
-        "WHERE `locations`.`id` = " + req.params.id;
+        "WHERE `locations`.`id` = " + connection.escape(req.params.id);
 
     connection.query(query, function(err, location) {
         if (err) {
@@ -186,8 +187,8 @@ app.post('/location/:id', function(req, res){
     // update user based on cookie
     var cookies = new Cookies(req, res);
     var query = "UPDATE `adventure`.`users` " +
-        "SET `location_id` = '" + req.params.id + "' " +
-        "WHERE `users`.`id` = " + cookies.get('user_id');
+        "SET `location_id` = " + connection.escape(req.params.id) + " " +
+        "WHERE `users`.`id` = " + connection.escape(cookies.get('user_id'));
 
     connection.query(query, function(err, location) {
         if (err) {
@@ -218,19 +219,33 @@ app.get('/img/:name', function(req, res){
  * put - update inventory item to location
  * delete - update inventory item to 0 (in pocket)
  */
-app.put('/inventory/:user_item_id/:location_id', function(req, res){
+app.put('/inventory/:user_item_id/:location_id/:item_id', function(req, res){
     // update user based on cookie
     var cookies = new Cookies(req, res);
     var query = "UPDATE `adventure`.`users_items` " +
-        "SET `location_id` = '" + req.params.location_id + "' " +
-        "WHERE `users_items`.`id` = " + req.params.user_item_id + " " +
-        "AND `users_items`.`user_id` = " + cookies.get('user_id');
+        "SET `location_id` = " + connection.escape(req.params.location_id) + " " +
+        "WHERE `users_items`.`id` = " + connection.escape(req.params.user_item_id) + " " +
+        "AND `users_items`.`user_id` = " + connection.escape(cookies.get('user_id'));
 
-    connection.query(query, function(err, location) {
+    connection.query(query, function(err, user_item) {
         if (err) {
             console.error('Error: ' + err.stack);
             return;
         } else {
+            // check for special events
+            // laptop at eaton
+            if(req.params.item_id == 5 && req.params.location_id == 3) {
+                // send player to secret room
+                query = "UPDATE `users` SET `location_id` = 11 WHERE " +
+                "`users`.`id` = " + connection.escape(cookies.get('user_id'));
+
+                connection.query(query, function(err, result) {
+                    if(err) {
+                        console.error('Error: ' + err.stack);
+                        return
+                    }
+                });
+            }
             res.status(200);
         }
     });
@@ -240,10 +255,10 @@ app.delete('/inventory/:user_item_id', function(req, res){
     var cookies = new Cookies(req, res);
     var query = "UPDATE `adventure`.`users_items` " +
         "SET `location_id` = 0 " +
-        "WHERE `users_items`.`id` = " + req.params.user_item_id + " " +
-        "AND `users_items`.`user_id` = " + cookies.get('user_id');
+        "WHERE `users_items`.`id` = " + connection.escape(req.params.user_item_id) + " " +
+        "AND `users_items`.`user_id` = " + connection.escape(cookies.get('user_id'));
 
-    connection.query(query, function(err, location) {
+    connection.query(query, function(err, user_item) {
         if (err) {
             console.error('Error: ' + err.stack);
             return;

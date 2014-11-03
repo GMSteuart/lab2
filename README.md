@@ -14,6 +14,8 @@ Notes:
 - There is no flash messages to the user on the screen of backend processes
 - Quickly going through the map may prevent from the next place loading on screen, but the player on the
     the backend will still have been updated
+- Passwords are stored in plain text (yes, this is bad but fine for the project)
+
 
 APIs:
 cookies - https://github.com/expressjs/cookies
