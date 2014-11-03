@@ -63,11 +63,9 @@
         function refresh() {
             // get user location and items
             $.get('/users', function (user) {
-                console.log(user);
 
                 // get location information
                 $.get("/location/" + user.location_id, function (location) {
-                    console.log(location);
 
                     // update the name text
                     $("#name").html(location.name);
@@ -76,6 +74,7 @@
                     $("#img").attr("src","/img/" + location.img);
 
                     // Output items
+                    $("#items").html("");
                     for(var i in user.items) {
                         var item = user.items[i];
 
@@ -83,15 +82,15 @@
                         if(item.location_id == 0) {
                             button = $("<button class='btn btn-default'/>");
                             button.text("Drop " + item.name);
-                            (function(button, user_item_id, location_id) {
+                            (function(button, user_item_id, location_id, item_id) {
                                 button.click(function() {
-                                    $.ajax("/inventory/" + user_item_id + "/" + location_id,{
+                                    $.ajax("/inventory/" + user_item_id + "/" + location_id + "/" + item_id,{
                                         success : refresh,
                                         type : "PUT"
                                     });
                                     refresh();
                                 });
-                            })(button, item.id, location.id);
+                            })(button, item.id, location.id, item.item_id);
                             $("#items").append(button);
 
                         // Check take (only if item is at current location)
